@@ -5,8 +5,6 @@ class Template(object):
     
     def __init__(self, text='', filename='', lookup=None):
         self.module_source = TemplateParser().translate(text, filename)
-        print self.module_source
-
         self.module_id = "memory:" + hex(id(self))
         self.code = compile(self.module_source, self.module_id, 'exec')
         self.module = ModuleType(self.module_id)

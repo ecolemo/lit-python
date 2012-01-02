@@ -48,15 +48,26 @@ def render_body(out):
     def compile_scriptlet(self, s, loc, tokens):
         lines = tokens[1].splitlines()
         indent_set = False
+        indent_next = 0
         firstline_indent = 0
         for line in lines:
-            if not indent_set:
-                m = re.search(r'\S', line)
-                if m: 
-                    firstline_indent = m.start()
-                    indent_set = True
+            m = re.search(r'\S', line)
+            if not indent_set and m: 
+                firstline_indent = m.start()
+                indent_set = True
                     
+            if m and line.rstrip().endswith(':'):
+                indent_next = 1
+            else:
+                indent_next = 0
+            
+            if line.strip() == 'end':
+                indent_next = -1
+                line = ' ' * firstline_indent + '# end block'
+
             self.printline(line[firstline_indent:])
+        
+        self.indent += indent_next
     
     def compile_expression(self, s, loc, tokens):
         self.printline("out.write(" + tokens[1] + ")")
