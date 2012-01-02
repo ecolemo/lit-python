@@ -19,7 +19,9 @@ You can use any expressions of the script language. It'll be evaluated and print
 directive gives special control.
 #### extends
 lit support template inheritance.
+
 	<%@ extends name="parent_template" %>
+
 #### block
 	<%@ block name="header" %>
 		<ul class="menu">
