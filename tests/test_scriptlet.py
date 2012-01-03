@@ -1,8 +1,8 @@
 import unittest
-from template import Template
+from lit.template import Template
 
 class TestScriptlet(unittest.TestCase):
-    def atest_scriptlet(self):
+    def test_scriptlet(self):
         text = u'''
 <%
     a = 0
@@ -20,7 +20,7 @@ a = <%= 10 %>
 s = 0
 for i in [1, 2, 3, 4]: %>
 loop <%= i %><% s = s + i %>
-<% end %>
+<%# end %>
 sum = <%= s %>'''
         
         self.assertEqual(u'''
@@ -36,14 +36,14 @@ loop 4
 sum = 10''', Template(text=text).render())
         
     def test_if(self):
-        text = u'''<% if True: %><%= 1 %><%end%><% else: %><%= 0 %><% end %>'''
+        text = u'''<% if True: %><%= 1 %><%# end%><% else: %><%= 0 %><% end %>'''
         self.assertEqual(u'''1''', Template(text=text).render())
         
     def test_function(self):
         text = u'''
 <% def embed(): %>
 hello
-<% end %>
+<%# end %>
 
 <% embed() %>'''
         print Template(text=text).module_source

@@ -1,5 +1,5 @@
 import unittest
-from template import Template
+from lit.template import Template
 
 class TestExpression(unittest.TestCase):
     
