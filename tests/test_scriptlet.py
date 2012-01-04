@@ -46,6 +46,5 @@ hello
 <%# end %>
 
 <% embed() %>'''
-        print Template(text=text).module_source
         self.assertEqual(u'''hello''', Template(text=text).render().strip())
         
