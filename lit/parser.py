@@ -3,16 +3,18 @@ from pyparsing import Literal, OneOrMore, White, Word, alphanums, QuotedString, 
 import re
 
 class TemplateParser(object):
+    def __init__(self, lookup=None):
+        self.lookup = lookup
+        
     def translate(self, text, filename):
         self.source = text
-        self.declaration = '''
-'''
+        self.super = None
+        self.inheritance = 0
+        self.declaration_lines = ['inheritance = 0']
         self.block_lines = []
-        self.source_lines = '''
-def render_body():
-'''.splitlines()
+        self.body_lines = ['def body():']
 
-        self.target_lines = self.source_lines
+        self.target_lines = self.body_lines
         self.indent = 1
         
         template_close = Literal('%>')
@@ -40,36 +42,46 @@ def render_body():
         lit.leaveWhitespace()
         lit.parseString(self.source)
         
-        translated = self.declaration + '\n'.join(self.block_lines + ['\n'] + self.source_lines)
-        print translated
+        translated =  '\n' + '\n'.join(self.declaration_lines + ['\n'] + self.block_lines + ['\n'] + self.body_lines)
+        if self.super:
+            translated = self.super.module_source + translated
         return translated
         
     def compile_directive(self, s, loc, tokens):
         tokens = filter(lambda token:not re.match(r'\s|=', token), tokens[1:-1])
         # TODO attributes to dict
-        getattr(self, 'process_' + tokens[0])(tokens[1:])
+        getattr(self, 'process_' + tokens[0])(list_to_dict(tokens[1:]))
     
-    def process_block(self, tokens):
-        if tokens[0] == 'name':
-            name = tokens[1]
-
-        self.printline('render_%s()' % name)
+    def process_block(self, attrs):
+        self.printline('%s()' % attrs['name'])
 
         self.target_lines = self.block_lines        
         self.indent = 0
-        self.printline('def render_%s():' % name)
+        self.printline('def %s():' % attrs['name'])
         self.indent += 1
     
-    def process_endblock(self, tokens):
-        self.target_lines = self.source_lines
+    def process_endblock(self, attrs):
+        self.target_lines = self.body_lines
         self.indent = 1
     
-    def process_include(self, tokens):
-        pass
+    def process_include(self, attrs):
+        target = self.lookup[attrs['name']]
+        for line in target.module_source.splitlines():
+            self.printline(line)
+        self.printline("body()")
+        
+    def process_extends(self, attrs):
+        self.super = self.lookup[attrs['name']]
+        self.inheritance = self.super.parser.inheritance + 1
+        self.declaration_lines[0] = 'inheritance = %d' % self.inheritance
+        self.body_lines[0] = 'def body_%d():' % self.inheritance
     
+    def process_body(self, attrs):
+        self.printline("globals()['body_%d' % inheritance]()")
+        
     def compile_declaration(self, s, loc, tokens):
-        print 'declaration'
-        self.source_lines.insert(0, '!!!!!' + tokens[1])
+        print 'declaration_lines'
+        self.body_lines.insert(0, '!!!!!' + tokens[1])
     
     def compile_scriptlet(self, s, loc, tokens):
         lines = tokens[1].splitlines()
@@ -102,3 +114,7 @@ def render_body():
 
     def printline(self, line):
         self.target_lines.append(' ' * self.indent * 4 + line)
+    
+
+def list_to_dict(tokens):
+    return dict([(tokens[i], tokens[i + 1]) for i in xrange(0, len(tokens), 2)])

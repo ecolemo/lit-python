@@ -7,7 +7,8 @@ class Template(object):
     def __init__(self, text='', filename='', lookup=None):
         if filename: text = open(filename, 'r').read()
         self.source = text
-        self.module_source = TemplateParser().translate(text, filename)
+        self.parser = TemplateParser(lookup)
+        self.module_source = self.parser.translate(text, filename)
         self.module_id = "memory:" + hex(id(self))
         self.code = compile(self.module_source, self.module_id, 'exec')
         self.module = ModuleType(self.module_id)
@@ -18,7 +19,7 @@ class Template(object):
         exec self.code in self.module.__dict__, self.module.__dict__
 
         self.module.out = TemplateOutput()
-        self.module.render_body()
+        self.module.body()
         return self.module.out.output
 
 class TemplateOutput(object):
